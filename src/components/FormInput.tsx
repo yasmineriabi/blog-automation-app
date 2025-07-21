@@ -8,7 +8,7 @@ interface FormInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
-  error?: string;
+  error?: string|boolean;
   autoComplete?: string;
   readOnly?: boolean;
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;

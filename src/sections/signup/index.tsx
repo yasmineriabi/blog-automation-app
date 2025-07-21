@@ -1,26 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { isValidEmail, doPasswordsMatch } from '@/utils/validation';
-import { signupApi } from '@/utils/authApi';
+import React from 'react';
+import Link from 'next/link';
+import FormInput from '@/components/FormInput';
+import Button from '@/components/Button';
+import FormMessage from '@/components/FormMessage';
+import useAuth from '@/store/auth';
+import * as Yup from 'yup';
+import { Form, FormikProvider, useFormik } from 'formik';
+
+const SignUpSchema = Yup.object().shape({
+  username: Yup.string().required('Username is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string().required('Password is required'),
+  confirmPassword: Yup.string().required('Confirm password is required'),
+});
 
 export default function SignupSession() {
-  const { push } = useRouter();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { register } = useAuth();
 
-  useEffect(() => {
-    setUsername('');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-  }, []);
+  const formik = useFormik({
+    initialValues: {
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationSchema: SignUpSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+        await register({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      setSubmitting(false);
+    },
+  });
+
 
   return (
     <section className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(120deg, #e0e7ff 0%, #fdf2fa 100%)'}}>
@@ -34,107 +50,94 @@ export default function SignupSession() {
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1 text-center">Create Account</h1>
         <p className="text-base text-purple-400 mb-8 text-center">Sign up to get started</p>
-        <form className="w-full space-y-5" onSubmit={async (e) => {
-          e.preventDefault();
-          setError('');
-          setSuccess('');
-          if (!isValidEmail(email)) {
-            setError('Please enter a valid email address.');
-            return;
-          }
-          if (!doPasswordsMatch(password, confirmPassword)) {
-            setError('Passwords do not match');
-            return;
-          }
-          setLoading(true);
-          try {
-            const { ok, data } = await signupApi(username, email, password, confirmPassword);
-            if (!ok) {
-              setError(data.message || 'Signup failed');
-            } else {
-              setSuccess('Account created! You can now sign in.');
-              setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
-              setTimeout(() => { push('/login'); }, 1500);
-            }
-          } catch (err) {
-            setError('Network error');
-          } finally {
-            setLoading(false);
-          }
-        }} autoComplete="off">
-          <div>
-            <label htmlFor="username" className="block mb-1 text-sm font-medium text-blue-600">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="Your username"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium text-blue-600">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block mb-1 text-sm font-medium text-blue-600">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block mb-1 text-sm font-medium text-blue-600">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <button type="submit" className="w-full py-2.5 bg-gradient-to-r from-blue-400 to-purple-300 text-white font-semibold rounded-lg shadow-md hover:from-purple-300 hover:to-blue-400 transition text-base" disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign Up'}
-          </button>
-          {error && <p className="text-center text-red-500 text-sm mt-2">{error}</p>}
-          {success && <p className="text-center text-green-600 text-sm mt-2">{success}</p>}
+
+          <FormikProvider value={formik}>
+                  <Form>
+          <FormInput
+            label="Username"
+            id="username"
+            name="username"
+            value={formik.values.username}
+            onChange={formik.handleChange}
+            placeholder="Your username"
+            autoComplete="off"
+            readOnly
+            error={formik.touched.username && formik.errors.username}
+          />
+          <FormInput
+            label="Email"
+            id="email"
+            name="email"
+            type="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            placeholder="you@email.com"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+            error={formik.touched.email && formik.errors.email}
+          />
+          <FormInput
+            label="Password"
+            id="password"
+            name="password"
+            type="password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            placeholder="••••••••"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+            error={formik.touched.password && formik.errors.password}
+          />
+          <FormInput
+            label="Confirm Password"
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            value={formik.values.confirmPassword}
+            onChange={formik.handleChange}
+            placeholder="••••••••"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+          />
+          <FormInput
+            label="Password"
+            id="password"
+            name="password"
+            type="password"
+            value={formik.values.confirmPassword}
+            onChange={formik.handleChange}
+            placeholder="••••••••"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+          />
+          <FormInput
+            label="Confirm Password"
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            value={formik.values.confirmPassword}
+            onChange={formik.handleChange}
+            placeholder="••••••••"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+          />
+          <Button type="submit" loading={formik.isSubmitting}>
+            Sign Up
+          </Button>
+          <FormMessage message={formik.errors.username || ''} type="error" />
+          <FormMessage message={formik.errors.email || ''} type="error" />
+          <FormMessage message={formik.errors.password || ''} type="error" />
+          <FormMessage message={formik.errors.confirmPassword || ''} type="error" />
           <p className="text-center text-sm text-purple-400 mt-4">
-            Already have an account? <a href="/login" className="font-semibold text-purple-500 hover:underline">Sign in</a>
+            Already have an account? <Link href="/login" className="font-semibold text-blue-600 hover:underline">Sign in</Link>
           </p>
-        </form>
+        </Form>
+          </FormikProvider>
       </div>
     </section>
   );

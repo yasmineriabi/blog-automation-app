@@ -1,7 +1,6 @@
-"use client";
-
-import SignupSession from '@/sections/signup';
+import GuestGuard from "@/auth/GuestGuard";
+import SignupSession from "@/sections/signup";
 
 export default function SignupPage() {
-  return <SignupSession />;
-} 
+  return <GuestGuard>  <SignupSession /> </GuestGuard>;
+}

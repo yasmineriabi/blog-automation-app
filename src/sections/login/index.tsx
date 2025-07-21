@@ -1,22 +1,45 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { isValidEmail } from '@/utils/validation';
-import { loginApi } from '@/utils/authApi';
+import Link from 'next/link';
+import FormInput from '@/components/FormInput';
+import Button from '@/components/Button';
+import FormMessage from '@/components/FormMessage';
+import useAuth from '@/store/auth';
+import * as Yup from 'yup';
+import { Form, FormikProvider, useFormik } from 'formik';
+
+const SignInSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string().required('Password is required'),
+  rememberMe: Yup.boolean(),
+});
 
 export default function LoginSession() {
-  const { push } = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  useEffect(() => {
-    setEmail('');
-    setPassword('');
-  }, []);
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+      showPassword: false,
+    },
 
+    validationSchema: SignInSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      await login({
+        email: values.email,
+        password: values.password,
+        rememberMe: values.rememberMe,
+      });
+      setSubmitting(false);
+    },
+  });
+
+  const { errors, touched, getFieldProps, setFieldValue, isSubmitting } =
+    formik;
+
+ 
   return (
     <section className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(120deg, #e0e7ff 0%, #fdf2fa 100%)'}}>
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center relative">
@@ -29,75 +52,49 @@ export default function LoginSession() {
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1 text-center">Welcome Back!</h1>
         <p className="text-base text-purple-400 mb-8 text-center">Sign in to your account</p>
-        <form className="w-full space-y-5" onSubmit={async (e) => {
-          e.preventDefault();
-          setError('');
-          if (!isValidEmail(email)) {
-            setError('Please enter a valid email address.');
-            return;
-          }
-          setLoading(true);
-          try {
-            const { ok, data } = await loginApi(email, password);
-            if (!ok) {
-              setError(data.message || 'Login failed');
-            } else {
-              localStorage.setItem('access_token', data.access_token);
-              push('/dashboard');
-            }
-          } catch (err) {
-            setError('Network error');
-          } finally {
-            setLoading(false);
-          }
-        }} autoComplete="off">
-          <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium text-blue-600">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block mb-1 text-sm font-medium text-blue-600">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="off"
-              readOnly
-              onFocus={e => e.target.removeAttribute('readOnly')}
-              className="w-full px-4 py-2 border border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 transition text-base bg-white placeholder:text-blue-200"
-              required
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs mb-2">
-            <div className="flex items-center gap-2">
-              <input id="remember" type="checkbox" className="w-4 h-4 border border-blue-200 rounded bg-white focus:ring-2 focus:ring-blue-200" />
-              <label htmlFor="remember" className="text-purple-400">Remember me</label>
+        <FormikProvider value={formik}>
+          <Form className="w-full space-y-5" onSubmit={formik.handleSubmit} autoComplete="off">
+          <FormInput
+            label="Email"
+            id="email"
+            name="email"
+            type="email"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            placeholder="you@email.com"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+            error={formik.touched.email && formik.errors.email}
+          />
+          <FormInput
+            label="Password"
+            id="password"
+            name="password"
+            type={formik.values.showPassword ? "text" : "password"}
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            placeholder="••••••••"
+            autoComplete="off"
+            readOnly
+            onFocus={e => e.target.removeAttribute('readOnly')}
+            error={formik.touched.password && formik.errors.password}
+          />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input type="checkbox" id="rememberMe" name="rememberMe" checked={formik.values.rememberMe} onChange={formik.handleChange} />
+              <label htmlFor="rememberMe">Remember me</label>
             </div>
-            <a href="#" className="text-purple-400 hover:underline">Forgot password?</a>
-          </div>
-          <button type="submit" className="w-full py-2.5 bg-gradient-to-r from-blue-400 to-purple-300 text-white font-semibold rounded-lg shadow-md hover:from-purple-300 hover:to-blue-400 transition text-base" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-          {error && <p className="text-center text-red-500 text-sm mt-2">{error}</p>}
+            </div>
+          <Button type="submit" loading={isSubmitting}>
+            Sign In
+          </Button>
+          <FormMessage message={errors.email || ''} type="error" />
           <p className="text-center text-sm text-purple-400 mt-4">
-            Don’t have an account? <a href="/signup" className="font-semibold text-purple-500 hover:underline">Sign up</a>
+            Don’t have an account? <Link href="/signup" className="font-semibold text-blue-600 hover:underline">Sign up</Link>
           </p>
-        </form>
+        </Form>
+        </FormikProvider>
       </div>
     </section>
   );

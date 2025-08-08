@@ -92,6 +92,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
     login: async (body) => {
       try {
         const { rememberMe, ...other } = body;
+        console.log(HOST_API)
         const res = await axiosInstance.post<{ token: string }>(
           `${HOST_API}/auth/login`,
           other,

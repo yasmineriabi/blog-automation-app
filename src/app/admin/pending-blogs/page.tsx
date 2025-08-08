@@ -1,46 +1,21 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import AuthGuard from "@/auth/AuthGuard";
-
-// Blog type definition
-interface Blog {
-  _id: string;
-  title: string;
-  content: string;
-  topicid: string;
-  approvedby: string;
-  publushedat: string;
-  createdat: string;
-  status: string;
-  createdby: string;
-  viewcount: number;
-}
+import useBlogStore from "@/store/blogs";
 
 export default function PendingBlogsPage() {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { blogs, loading, error, fetchPendingBlogs, approveBlog, rejectBlog } = useBlogStore();
 
   useEffect(() => {
-    fetch("/api/admin/pending-blogs", {
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Not authorized or error fetching blogs");
-        return res.json();
-      })
-      .then((data) => setBlogs(data))
-      .catch((err) => {
-        setError("Failed to fetch pending blogs.");
-        setBlogs([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    fetchPendingBlogs();
+  }, [fetchPendingBlogs]);
 
   const handleAction = async (id: string, action: "accept" | "reject") => {
-    // Placeholder for future backend endpoints
-    // await fetch(`/api/admin/pending-blogs/${id}/${action}`, { method: "POST", credentials: "include" });
-    setBlogs((prev) => prev.filter((blog) => blog._id !== id));
+    if (action === "accept") {
+      await approveBlog(id);
+    } else {
+      await rejectBlog(id);
+    }
   };
 
   if (loading) return <div>Loading...</div>;

@@ -9,4 +9,17 @@ export interface Blog {
   status: string;
   createdby: string;
   viewcount: number;
+}
+
+export interface ApprovedBlogWithDomain {
+  _id: string;
+  title: string;
+  content: string;
+  status: string;
+  topicid: string;
+  created_by: string;
+  viewcount: number;
+  domain: string;
+  topic: string;
+  createdat: string;
 } 

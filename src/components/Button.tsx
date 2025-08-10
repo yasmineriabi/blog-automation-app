@@ -5,14 +5,16 @@ interface ButtonProps {
   loading?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  onClick?: () => void;
 }
 
-export default function Button({ children, loading, type = 'button', className }: ButtonProps) {
+export default function Button({ children, loading, type = 'button', className, onClick }: ButtonProps) {
   return (
     <button
       type={type}
       className={`w-full py-2 px-4 bg-gradient-to-r from-indigo-500 to-teal-400 text-white font-semibold rounded-md shadow hover:from-teal-400 hover:to-indigo-500 transition text-base flex items-center justify-center ${className || ''}`}
       disabled={loading}
+      onClick={onClick}
     >
       {loading ? (
         <span className="flex items-center gap-2">

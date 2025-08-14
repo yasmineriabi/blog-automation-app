@@ -22,4 +22,4 @@ export interface ApprovedBlogWithDomain {
   domain: string;
   topic: string;
   createdat: string;
-} 
+}

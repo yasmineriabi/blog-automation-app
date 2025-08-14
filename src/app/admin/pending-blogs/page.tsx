@@ -30,50 +30,65 @@ export default function PendingBlogsPage() {
 
   return (
     <AuthGuard allowedRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-muted/30 via-background to-muted/30">
         <SimpleHeader />
-        <div style={{ maxWidth: 700, margin: "2rem auto", padding: "1rem" }}>
-          <h1>Pending Blogs</h1>
-          {error && <div style={{ color: "red" }}>{error}</div>}
-          {blogs.length === 0 ? (
-            <p>No pending blogs.</p>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "left", padding: "8px" }}>Title</th>
-                  <th style={{ textAlign: "left", padding: "8px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {blogs.map((blog) => (
-                  <tr key={blog._id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: "8px" }}>{blog.title}</td>
-                    <td style={{ padding: "8px" }}>
-                      <Button
-                        onClick={() => handleReadMore(blog._id)}
-                        className="w-auto px-3 py-1 text-sm mr-2"
-                      >
-                        Read More
-                      </Button>
-                      <button
-                        onClick={() => handleAction(blog._id, "accept")}
-                        style={{ marginRight: "8px" }}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleAction(blog._id, "reject")}
-                        style={{ color: "red" }}
-                      >
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-foreground mb-8 text-center">Pending Blogs</h1>
+            {error && <div className="text-destructive text-center mb-4">{error}</div>}
+            {blogs.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground text-lg">No pending blogs.</p>
+              </div>
+            ) : (
+              <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-semibold text-foreground">Title</th>
+                        <th className="text-left p-4 font-semibold text-foreground">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {blogs.map((blog) => (
+                        <tr key={blog._id} className="border-b border-border last:border-b-0">
+                          <td className="p-4 text-foreground">{blog.title}</td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => handleReadMore(blog._id)}
+                                className="px-3 py-1 text-sm"
+                                size="sm"
+                              >
+                                Read More
+                              </Button>
+                              <Button
+                                onClick={() => handleAction(blog._id, "accept")}
+                                className="px-3 py-1 text-sm"
+                                size="sm"
+                                variant="primary"
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                onClick={() => handleAction(blog._id, "reject")}
+                                className="px-3 py-1 text-sm"
+                                size="sm"
+                                variant="destructive"
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </AuthGuard>

@@ -34,7 +34,7 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     fetchPendingBlogs: async () => {
       try {
         set({ loading: true, error: "" });
-        const res = await axiosInstance.get<Blog[]>(`${HOST_API}/blogs/admin/pending-blogs`);
+        const res = await axiosInstance.get<Blog[]>(`/api/blogs/admin/pending-blogs`);
         set({ blogs: res.data, loading: false });
       } catch (error) {
         set({ error: error.message, loading: false });
@@ -45,7 +45,7 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     fetchApprovedBlogsWithDomains: async () => {
       try {
         set({ loading: true, error: "" });
-        const res = await axiosInstance.get<ApprovedBlogWithDomain[]>(`${HOST_API}/blogs/approved/with-domains`);
+        const res = await axiosInstance.get<ApprovedBlogWithDomain[]>(`/api/blogs/approved/with-domains`);
         set({ approvedBlogsWithDomains: res.data, loading: false });
       } catch (error) {
         set({ error: error.message, loading: false });
@@ -56,7 +56,7 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     fetchBlogById: async (id: string) => {
       try {
         set({ loading: true, error: "" });
-        const res = await axiosInstance.get<Blog>(`${HOST_API}/blogs/${id}`);
+        const res = await axiosInstance.get<Blog>(`/api/blogs/${id}`);
         set({ currentBlog: res.data, loading: false });
       } catch (error) {
         set({ error: error.message, loading: false });
@@ -67,7 +67,7 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     approveBlog: async (id: string) => {
       try {
         console.log("Approving blog with ID:", id);
-        const res = await axiosInstance.post(`${HOST_API}/blogs/admin/pending-blogs/approve`, {
+        const res = await axiosInstance.post(`/api/blogs/admin/pending-blogs/approve`, {
           blogId: id
         });
         set((state) => {
@@ -82,7 +82,7 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     rejectBlog: async (id: string) => {
       try {
         console.log("Rejecting blog with ID:", id);
-        const res = await axiosInstance.post(`${HOST_API}/blogs/admin/pending-blogs/reject`, {
+        const res = await axiosInstance.post(`/api/blogs/admin/pending-blogs/reject`, {
           blogId: id
         });
         set((state) => {
@@ -104,4 +104,4 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
   }))
 );
 
-export default useBlogStore; 
+export default useBlogStore;

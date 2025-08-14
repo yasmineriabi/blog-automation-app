@@ -53,6 +53,12 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
       try {
         set({ loading: true });
 
+        // Check if we're in browser environment
+        if (typeof window === 'undefined') {
+          set({ loading: false, authenticated: false });
+          return;
+        }
+
         const token =
           localStorage.getItem("accessToken") ||
           sessionStorage.getItem("accessToken");
@@ -61,22 +67,27 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
           const persistent = Boolean(localStorage.getItem("accessToken"));
           setSession(token, persistent);
 
-          const { user } = jwtDecode(token);
-          const res = await axiosInstance.get<IUser>(
-            `${HOST_API}/users/${user}`,
-          );
+          const decoded = jwtDecode(token);
+          if (decoded && decoded.user) {
+            const res = await axiosInstance.get<IUser>(
+              `/api/users/${decoded.user}`,
+            );
 
-          set({
-            user: res.data,
-            loading: false,
-            authenticated: true,
-          });
+            set({
+              user: res.data,
+              loading: false,
+              authenticated: true,
+            });
+          } else {
+            get().handleSessionReset();
+          }
         } else {
           get().handleSessionReset();
         }
       } catch (error) {
         console.error("Initialization Error:", error);
-        toast.error(error.message || "An unexpected error occurred.");
+        const errorMessage = error?.message || "An unexpected error occurred.";
+        toast.error(errorMessage);
         get().handleSessionReset();
       } finally {
         set({ loading: false });
@@ -91,9 +102,10 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
     },
     login: async (body) => {
       try {
+        set({ loading: true });
         const { rememberMe, ...other } = body;
         const res = await axiosInstance.post<{ token: string }>(
-          `${HOST_API}/auth/login`,
+          `/api/auth/login`,
           other,
         
         );
@@ -103,7 +115,8 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
           await get().initialize();
         }
       } catch (error) {
-        toast.error(error?.message);
+        const errorMessage = error?.message || 'Login failed';
+        toast.error(errorMessage);
         set({ user: null, loading: false, authenticated: false });
       }
     },
@@ -111,7 +124,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
     OAuthlogin: async (verifyToken) => {
       try {
         const res = await axiosInstance.post<{ token: string }>(
-          `${HOST_API}/auth/oauth-login`,
+          `/api/auth/oauth-login`,
           { token: verifyToken },
          
         );
@@ -119,7 +132,8 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
         setSession(token, true);
         await get().initialize();
       } catch (error) {
-        toast.error(error?.message);
+        const errorMessage = error?.message || 'OAuth login failed';
+        toast.error(errorMessage);
         set({ user: null, loading: false, authenticated: false });
         throw error;
       }
@@ -128,7 +142,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
       try {
         const { email, password } = data;
         const res = await axiosInstance.post<{ message: string }>(
-          `${HOST_API}/auth/register`,
+          `/api/auth/signup`,
           data,
          
         );
@@ -137,10 +151,11 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
         }
       } catch (error) {
         console.warn(error);
-        toast.error(error.message);
+        const errorMessage = error?.message || 'Registration failed';
+        toast.error(errorMessage);
         set({ user: null, loading: false, authenticated: false });
 
-        throw new Error(error.message);
+        throw new Error(errorMessage);
       }
     },
 
@@ -153,7 +168,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
       set({ uppdateLoader: true });
       try {
         const res = await axiosInstance.put<IUser>(
-          `${HOST_API}/users/${id}`,
+          `/api/users/${id}`,
           updatedData,
         );
         const accessToken =
@@ -164,7 +179,8 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
           set({ user: res.data, uppdateLoader: false });
         }
       } catch (error) {
-        toast.error(error.message);
+        const errorMessage = error?.message || 'Update failed';
+        toast.error(errorMessage);
         set({ uppdateLoader: false });
       }
     },
@@ -172,7 +188,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
     forgotPassword: async (email) => {
       try {
         const res = await axiosInstance.post(
-          `${HOST_API}/email/password/reset`,
+          `/api/email/password/reset`,
           {
             email: email.toLowerCase(),
           },
@@ -180,7 +196,8 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
         );
         toast.success(res.data.message);
       } catch (error) {
-        toast.error(error.message);
+        const errorMessage = error?.message || 'Password reset failed';
+        toast.error(errorMessage);
 
         throw error;
       }
@@ -189,7 +206,7 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
     resetPassword: async (token, password) => {
       try {
         await axiosInstance.post(
-          `${HOST_API}/users/reset-password`,
+          `/api/users/reset-password`,
           {
             token,
             password,
@@ -197,25 +214,27 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
          
         );
       } catch (error) {
-        toast.error(error.message);
+        const errorMessage = error?.message || 'Password reset failed';
+        toast.error(errorMessage);
         throw error;
       }
     },
     sendVerificationMail: async (mail) => {
       try {
-        const res = await axiosInstance.post(`${HOST_API}/email/verify`, {
+        const res = await axiosInstance.post(`/api/email/verify`, {
           email: mail,
         });
         toast.success(res.data.message);
       } catch (error) {
-        toast.error(error.message);
+        const errorMessage = error?.message || 'Email verification failed';
+        toast.error(errorMessage);
         throw error;
       }
     },
     verifyEmail: async (body) => {
       try {
         const res = await axiosInstance.post<{ isVerified: boolean }>(
-          `${HOST_API}/users/verify-email`,
+          `/api/users/verify-email`,
           body,
         );
         set((state) => ({
@@ -225,7 +244,8 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
           },
         }));
       } catch (error) {
-        toast.error(error.messag);
+        const errorMessage = error?.message || 'Email verification failed';
+        toast.error(errorMessage);
         throw error;
       }
     },

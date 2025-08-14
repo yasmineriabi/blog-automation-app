@@ -14,6 +14,10 @@ export default function AllBlogsPage() {
     fetchApprovedBlogsWithDomains();
   }, [fetchApprovedBlogsWithDomains]);
 
+  useEffect(() => {
+    fetchApprovedBlogsWithDomains();
+  }, [fetchApprovedBlogsWithDomains]);
+
   const handleReadMore = (blogId: string) => {
     router.push(`/blogs/${blogId}`);
   };
@@ -24,9 +28,9 @@ export default function AllBlogsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-muted/30 via-background to-muted/30">
         <SimpleHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="mb-8">
             <Button
@@ -35,32 +39,32 @@ export default function AllBlogsPage() {
             >
               ← Back to Home
             </Button>
-            <h1 className="text-3xl font-bold text-gray-900">All Approved Blogs</h1>
-            <p className="text-gray-600 mt-2">Discover all our approved blog content</p>
+            <h1 className="text-3xl font-bold text-foreground">All Approved Blogs</h1>
+            <p className="text-muted-foreground mt-2">Discover all our approved blog content</p>
           </div>
 
           {/* Blogs Grid */}
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-              <p className="mt-4 text-gray-600 text-lg">Loading blogs...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="mt-4 text-muted-foreground text-lg">Loading blogs...</p>
             </div>
           ) : approvedBlogsWithDomains.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No approved blogs available yet.</p>
+              <p className="text-muted-foreground text-lg">No approved blogs available yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {approvedBlogsWithDomains.map((blog) => (
-                <div key={blog._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <div key={blog._id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                   <div className="p-6">
                     <div className="mb-4">
-                      <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                      <span className="inline-block bg-primary/10 text-primary text-xs px-3 py-1 rounded-full font-medium">
                         {blog.domain}
                       </span>
                     </div>
                     
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 line-clamp-2">
+                    <h3 className="text-lg font-semibold text-card-foreground mb-4 line-clamp-2">
                       {blog.title}
                     </h3>
                     

@@ -1,1 +1,1 @@
-export const HOST_API= process.env.HOST_API
+export const HOST_API = "http://localhost:3000";

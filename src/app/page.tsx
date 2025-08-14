@@ -1,21 +1,21 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Loader from "@/components/Loader";
+import Loader from "../components/Loader";
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to dashboard instead of showing home page
-    router.push("/dashboard");
+    // Redirect to login page by default
+    router.push("/login");
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted via-background to-muted">
+      <div className="text-center space-y-4">
         <Loader />
-        <p className="mt-4 text-gray-600">Redirecting to dashboard...</p>
+        <p className="text-muted-foreground">Redirecting...</p>
       </div>
     </div>
   );

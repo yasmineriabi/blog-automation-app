@@ -5,7 +5,13 @@ import useAuthStore from "@/store/auth";
 import Loader from "@/components/Loader";
 import { usePathname, useRouter } from "next/navigation";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({
+  children,
+  allowedRoles = [],
+}: {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const { authenticated, user, loading } = useAuthStore();
   const { replace } = useRouter();
@@ -21,6 +27,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     if (user) {
+      if (
+        allowedRoles.length > 0 &&
+        !allowedRoles.includes(user.role)
+      ) {
+        setIsAuthenticated(false);
+        replace("/not-authorized");
+        return;
+      }
       setIsAuthenticated(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -31,6 +45,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return <Loader />;
   }
 
-  // Only render children if authenticated
+  // Only render children if authenticated and authorized
   return isAuthenticated ? children : null;
 }

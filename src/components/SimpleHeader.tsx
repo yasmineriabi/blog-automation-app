@@ -1,19 +1,27 @@
 "use client";
 import { useRouter } from "next/navigation";
 import useAuth from "@/store/auth";
-import Button from "./Button";
+import ProfileDropdown from "./ProfileDropdown";
+import BlogFilter from "./BlogFilter";
 
 export default function SimpleHeader() {
   const router = useRouter();
-  const { logout, authenticated } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    router.replace("/login");
-  };
+  const { authenticated } = useAuth();
 
   const handleHome = () => {
     router.push("/dashboard");
+  };
+
+  const handleDomainSelect = (domain: string | null) => {
+    // This will be handled by the parent component that uses the header
+    // For now, we'll just store it in localStorage or pass it through context
+    if (domain) {
+      localStorage.setItem('selectedDomain', domain);
+    } else {
+      localStorage.removeItem('selectedDomain');
+    }
+    // Trigger a page reload or state update to reflect the filter
+    window.location.reload();
   };
 
   // Don't show header on login/signup pages
@@ -50,10 +58,14 @@ export default function SimpleHeader() {
           <span>Blogs Platform</span>
         </button>
 
-        {/* Logout Button */}
-        <Button onClick={handleLogout} variant="destructive" size="sm">
-          Logout
-        </Button>
+        {/* Profile Section with Filter */}
+        <div className="flex items-center space-x-3">
+          <BlogFilter 
+            onDomainSelect={handleDomainSelect}
+            selectedDomain={localStorage.getItem('selectedDomain')}
+          />
+          <ProfileDropdown />
+        </div>
       </div>
     </header>
   );

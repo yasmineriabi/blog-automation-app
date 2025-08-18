@@ -1,33 +1,70 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import useAuth from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/auth/AuthGuard';
 import Button from '@/components/Button';
 import SimpleHeader from '@/components/SimpleHeader';
 import useBlogStore from '@/store/blogs';
+import BlogCard from '@/components/BlogCard';
+import { scrollToTop } from '@/utils/uiUtils';
 
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { approvedBlogsWithDomains, loading, fetchApprovedBlogsWithDomains } = useBlogStore();
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const blogsPerPage = 12;
 
   useEffect(() => {
     fetchApprovedBlogsWithDomains();
+    // Get selected domain from localStorage
+    const storedDomain = localStorage.getItem('selectedDomain');
+    setSelectedDomain(storedDomain);
   }, [fetchApprovedBlogsWithDomains]);
 
-  const handleAdminDashboard = () => {
-    router.push('/admin/pending-blogs');
-  };
 
-  const handleViewBlogs = () => {
-    // TODO: Redirect to user's blog viewing page when implemented
-    router.push('/user/blogs');
-  };
+
 
   const handleReadMore = (blogId: string) => {
     router.push(`/blogs/${blogId}`);
   };
+
+  // Filter blogs by selected domain (case-insensitive)
+  const filteredBlogs = selectedDomain 
+    ? approvedBlogsWithDomains.filter(blog => blog.domain.toLowerCase() === selectedDomain.toLowerCase())
+    : approvedBlogsWithDomains;
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredBlogs.length / blogsPerPage);
+  
+  // Ensure current page is within valid range
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages || 1);
+  
+  const startIndex = (validCurrentPage - 1) * blogsPerPage;
+  const endIndex = Math.min(startIndex + blogsPerPage, filteredBlogs.length);
+  const currentBlogs = filteredBlogs.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    // Ensure page is within valid range
+    const validPage = Math.min(Math.max(1, page), totalPages);
+    setCurrentPage(validPage);
+    scrollToTop();
+  };
+
+  // Update current page if it's out of bounds
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  // Reset to page 1 when blogs change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredBlogs.length]);
 
   return (
     <AuthGuard>
@@ -35,94 +72,73 @@ export default function HomePage() {
         <SimpleHeader />
         {/* Main Content */}
         <main className="container mx-auto px-4 py-8">
-          {/* Welcome Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Welcome to <span className="text-primary">Blogs Platform</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Discover amazing content from our community of writers and creators
-            </p>
-          </div>
-
-          {/* User Info Card */}
-          <div className="bg-card border border-border rounded-2xl shadow-sm p-6 mb-8 max-w-md mx-auto">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-card-foreground mb-2">
-                Welcome back, {user?.username || 'User'}!
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Role:{" "}
-                <span className="capitalize font-medium">
-                  {user?.role || "user"}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          {/* Admin Actions */}
-          {user?.role === 'admin' && (
-            <div className="bg-card border border-border rounded-2xl shadow-sm p-6 mb-8 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-card-foreground mb-4 text-center">Admin Actions</h3>
-              <Button
-                onClick={handleAdminDashboard}
-                className="w-full"
-              >
-                Manage Pending Blogs
-              </Button>
-            </div>
-          )}
-
           {/* Approved Blogs Section */}
           <div className="mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Latest Blogs</h2>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-foreground mb-2">Latest Blogs</h2>
+              {selectedDomain && (
+                <p className="text-muted-foreground">
+                  Filtered by: <span className="font-medium text-primary">{selectedDomain}</span>
+                </p>
+              )}
+            </div>
             
             {loading ? (
               <div className="text-center py-8">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
                 <p className="mt-2 text-muted-foreground">Loading blogs...</p>
               </div>
-            ) : approvedBlogsWithDomains.length === 0 ? (
+            ) : filteredBlogs.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground text-lg">No approved blogs available yet.</p>
+                <p className="text-muted-foreground text-lg">No blogs available.</p>
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {approvedBlogsWithDomains.slice(0, 12).map((blog) => (
-                    <div
+                  {currentBlogs.map((blog) => (
+                    <BlogCard
                       key={blog._id}
-                      className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
-                    >
-                      <div className="p-6">
-                        <div className="mb-4">
-                          <span className="inline-block bg-primary/10 text-primary text-xs px-3 py-1 rounded-full font-medium">
-                            {blog.domain}
-                          </span>
-                        </div>
-                        
-                        <h3 className="text-xl font-semibold text-card-foreground mb-4 line-clamp-2">
-                          {blog.title}
-                        </h3>
-                        
-                        <Button
-                          onClick={() => handleReadMore(blog._id)}
-                          className="w-full"
-                        >
-                          Read More
-                        </Button>
-                      </div>
-                    </div>
+                      blog={blog}
+                      onReadMore={handleReadMore}
+                    />
                   ))}
                 </div>
                 
-                {approvedBlogsWithDomains.length > 12 && (
-                  <div className="text-center">
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center space-x-2 mb-8">
                     <Button
-                      onClick={() => router.push('/blogs')}
-                      size="lg"
+                      onClick={() => handlePageChange(validCurrentPage - 1)}
+                      variant="outline"
+                      size="sm"
+                      className={`flex items-center space-x-1 ${validCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      See More Blogs
+                      <ChevronLeft size={16} />
+                      <span>Previous</span>
+                    </Button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                        <Button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          variant={validCurrentPage === page ? "primary" : "outline"}
+                          size="sm"
+                          className="w-10 h-10 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={() => handlePageChange(validCurrentPage + 1)}
+                      variant="outline"
+                      size="sm"
+                      className={`flex items-center space-x-1 ${validCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <span>Next</span>
+                      <ChevronRight size={16} />
                     </Button>
                   </div>
                 )}

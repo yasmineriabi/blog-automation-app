@@ -35,7 +35,8 @@ type AuthActionsType = {
   logout: () => void;
   updateUser: (updatedData: IUpdatedUser, id: string) => Promise<void>;
   updateUsername: (userId: string, username: string) => Promise<void>;
-  updatePassword: (userId: string, newPassword: string) => Promise<void>;
+  updatePassword: (userId: string, oldPassword: string, newPassword: string) => Promise<void>;
+  uploadProfilePicture: (userId: string, file: File) => Promise<void>;
 
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -211,12 +212,12 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
       }
     },
 
-    updatePassword: async (userId: string, newPassword: string) => {
+    updatePassword: async (userId: string, oldPassword: string, newPassword: string) => {
       set({ uppdateLoader: true });
       try {
         const res = await axiosInstance.put<{ message: string }>(
           `/api/users/update-password`,
-          { userId, newPassword },
+          { userId, oldPassword, newPassword },
         );
         
         if (res.data) {
@@ -225,6 +226,39 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
         }
       } catch (error) {
         const errorMessage = error?.message || 'Password update failed';
+        toast.error(errorMessage);
+        set({ uppdateLoader: false });
+        throw error;
+      }
+    },
+
+    uploadProfilePicture: async (userId: string, file: File) => {
+      set({ uppdateLoader: true });
+      try {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        formData.append('userId', userId);
+
+        const res = await axiosInstance.post<{ message: string; avatarUrl: string }>(
+          `/api/users/upload-profile-picture`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        
+        if (res.data) {
+          // Update the user state with new profile picture
+          set((state) => ({
+            user: state.user ? { ...state.user, profilePicture: res.data.avatarUrl } : null,
+            uppdateLoader: false,
+          }));
+          toast.success(res.data.message);
+        }
+      } catch (error) {
+        const errorMessage = error?.message || 'Profile picture upload failed';
         toast.error(errorMessage);
         set({ uppdateLoader: false });
         throw error;

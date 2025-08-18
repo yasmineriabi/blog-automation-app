@@ -5,6 +5,7 @@ export interface IUser {
   createdAt: string;
   updatedAt: string;
   avatar: string;
+  profilePicture?: string;
   role: UserRole;
   isVerified: boolean;
 }

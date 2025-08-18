@@ -11,6 +11,8 @@ type BlogStateType = {
   currentBlog: Blog | null;
   approvedBlogsWithDomains: ApprovedBlogWithDomain[];
   loading: boolean;
+  addingTopics: boolean;
+  generatingBlogs: boolean;
   error: string;
 };
 
@@ -20,6 +22,8 @@ type BlogActionsType = {
   fetchApprovedBlogsWithDomains: () => Promise<void>;
   approveBlog: (id: string) => Promise<void>;
   rejectBlog: (id: string) => Promise<void>;
+  addTopics: () => Promise<void>;
+  generateBlogs: () => Promise<void>;
   clearError: () => void;
   clearCurrentBlog: () => void;
 };
@@ -30,6 +34,8 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     currentBlog: null,
     approvedBlogsWithDomains: [],
     loading: false,
+    addingTopics: false,
+    generatingBlogs: false,
     error: "",
 
     fetchPendingBlogs: async () => {
@@ -99,6 +105,57 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
         });
         toast.success("Blog rejected successfully");
       } catch (error) {
+        toast.error(error.message);
+      }
+    },
+
+    addTopics: async () => {
+      try {
+        set({ addingTopics: true, error: "" });
+        const res = await axiosInstance.post(`/api/topics/add-topic`);
+        toast.success("Topics added successfully!");
+        set({ addingTopics: false });
+      } catch (error) {
+        set({ error: error.message, addingTopics: false });
+        toast.error(error.message);
+      }
+    },
+
+    generateBlogs: async () => {
+      try {
+        set({ generatingBlogs: true, error: "" });
+        let totalBlogsGenerated = 0;
+        let hasMoreTopics = true;
+        
+        while (hasMoreTopics) {
+          const res = await axiosInstance.post(`/api/blogs/add-blog`);
+          
+          // Check if the response indicates no more topics
+          if (res.data && typeof res.data === 'object' && 'message' in res.data) {
+            if (res.data.message.includes('No unassigned topics available')) {
+              hasMoreTopics = false;
+              if (totalBlogsGenerated > 0) {
+                toast.success(`Blog generation completed! Generated ${totalBlogsGenerated} blogs.`);
+              } else {
+                toast("No unassigned topics available for blog generation.");
+              }
+            } else {
+              // Some other message, treat as error
+              throw new Error(res.data.message);
+            }
+          } else if (Array.isArray(res.data)) {
+            // Successfully generated blogs
+            totalBlogsGenerated += res.data.length;
+            toast.success(`Generated ${res.data.length} blogs! Total: ${totalBlogsGenerated}`);
+          } else {
+            // Unexpected response format
+            throw new Error("Unexpected response format from blog generation");
+          }
+        }
+        
+        set({ generatingBlogs: false });
+      } catch (error) {
+        set({ error: error.message, generatingBlogs: false });
         toast.error(error.message);
       }
     },

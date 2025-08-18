@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ListFilter, X } from "lucide-react";
 import useBlogStore from "@/store/blogs";
+import { getUniqueDomains } from "@/utils/blogUtils";
+import { createClickOutsideHandler, addClickOutsideListener } from "@/utils/uiUtils";
 
 interface BlogFilterProps {
   onDomainSelect: (domain: string | null) => void;
@@ -15,24 +17,16 @@ export default function BlogFilter({ onDomainSelect, selectedDomain }: BlogFilte
   const { approvedBlogsWithDomains } = useBlogStore();
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const handleClickOutside = createClickOutsideHandler(dropdownRef, () => setIsOpen(false));
+    return addClickOutsideListener(handleClickOutside);
   }, []);
 
-  // Get unique domains from approved blogs
-  const uniqueDomains = Array.from(
-    new Set(approvedBlogsWithDomains.map(blog => blog.domain))
-  ).sort();
+  // Get unique domains from approved blogs (case-insensitive)
+  const uniqueDomains = getUniqueDomains(approvedBlogsWithDomains);
 
   const handleDomainSelect = (domain: string) => {
-    if (selectedDomain === domain) {
-      // If clicking the same domain, clear the filter
+    if (selectedDomain && selectedDomain.toLowerCase() === domain.toLowerCase()) {
+      // If clicking the same domain (case-insensitive), clear the filter
       onDomainSelect(null);
     } else {
       // Select the new domain
@@ -90,14 +84,14 @@ export default function BlogFilter({ onDomainSelect, selectedDomain }: BlogFilte
                   key={domain}
                   onClick={() => handleDomainSelect(domain)}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    selectedDomain === domain
+                    selectedDomain && selectedDomain.toLowerCase() === domain.toLowerCase()
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">{domain}</span>
-                    {selectedDomain === domain && (
+                    {selectedDomain && selectedDomain.toLowerCase() === domain.toLowerCase() && (
                       <span className="text-xs">✓</span>
                     )}
                   </div>

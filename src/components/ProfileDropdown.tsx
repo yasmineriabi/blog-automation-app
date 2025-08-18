@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, User, Settings } from "lucide-react";
+import { ChevronDown, LogOut, User, Shield, UserCheck } from "lucide-react";
 import useAuth from "@/store/auth";
 import { getCurrentUserDisplayInitials } from "@/utils/getInitials";
+import { createClickOutsideHandler, addClickOutsideListener, isAdmin } from "@/utils/uiUtils";
 
 export default function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,14 +14,8 @@ export default function ProfileDropdown() {
   const { user, logout, authenticated } = useAuth();
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const handleClickOutside = createClickOutsideHandler(dropdownRef, () => setIsOpen(false));
+    return addClickOutsideListener(handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -35,7 +30,12 @@ export default function ProfileDropdown() {
   };
 
   const handleProfile = () => {
-    router.push("/profile");
+    router.push("/profile-info");
+    setIsOpen(false);
+  };
+
+  const handleSecurity = () => {
+    router.push("/security");
     setIsOpen(false);
   };
 
@@ -44,14 +44,14 @@ export default function ProfileDropdown() {
   }
 
   const userInitials = getCurrentUserDisplayInitials(2);
-  const isAdmin = user.role === "admin" || user.role === "super-admin";
+  const userIsAdmin = isAdmin(user.role);
 
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
+        className="flex items-center justify-center w-8 h-8 bg-violet-200 text-violet-700 rounded-full hover:bg-violet-300 transition-colors"
       >
         {/* User Avatar with Initials */}
         <span className="text-sm font-medium">
@@ -65,14 +65,14 @@ export default function ProfileDropdown() {
           {/* User Info Section */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+              <div className="w-10 h-10 bg-violet-200 text-violet-700 rounded-full flex items-center justify-center text-sm font-medium">
                 {userInitials}
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">
                   {user.username}
                 </p>
-                {isAdmin && (
+                {userIsAdmin && (
                   <p className="text-xs text-muted-foreground capitalize">
                     {user.role}
                   </p>
@@ -87,17 +87,27 @@ export default function ProfileDropdown() {
               onClick={handleProfile}
               className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
             >
-              <User size={16} />
+              <UserCheck size={16} />
               <span>Profile</span>
             </button>
 
-            {isAdmin && (
+            <button
+              onClick={handleSecurity}
+              className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
+            >
+              <Shield size={16} />
+              <span>Security</span>
+            </button>
+
+            {userIsAdmin && (
               <button
                 onClick={handleDashboard}
                 className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
               >
-                <Settings size={16} />
-                <span>Pending Blogs</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Manage Blogs</span>
               </button>
             )}
 

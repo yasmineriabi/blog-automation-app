@@ -18,6 +18,7 @@ export interface ApprovedBlogWithDomain {
   status: string;
   topicid: string;
   created_by: string;
+  approvedby: string;
   viewcount: number;
   domain: string;
   topic: string;

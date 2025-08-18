@@ -5,6 +5,7 @@ import AuthGuard from "@/auth/AuthGuard";
 import useBlogStore from "@/store/blogs";
 import Button from "@/components/Button";
 import SimpleHeader from "@/components/SimpleHeader";
+import { Check, X, ArrowRight } from "lucide-react";
 
 export default function PendingBlogsPage() {
   const { blogs, loading, error, fetchPendingBlogs, approveBlog, rejectBlog } = useBlogStore();
@@ -58,26 +59,30 @@ export default function PendingBlogsPage() {
                             <div className="flex items-center gap-2">
                               <Button
                                 onClick={() => handleReadMore(blog._id)}
-                                className="px-3 py-1 text-sm"
+                                className="p-2"
                                 size="sm"
+                                variant="outline"
+                                title="Read More"
                               >
-                                Read More
+                                <ArrowRight size={16} />
                               </Button>
                               <Button
                                 onClick={() => handleAction(blog._id, "accept")}
-                                className="px-3 py-1 text-sm"
+                                className="p-2"
                                 size="sm"
-                                variant="primary"
+                                variant="default"
+                                title="Accept"
                               >
-                                Accept
+                                <Check size={16} />
                               </Button>
                               <Button
                                 onClick={() => handleAction(blog._id, "reject")}
-                                className="px-3 py-1 text-sm"
+                                className="p-2"
                                 size="sm"
                                 variant="destructive"
+                                title="Reject"
                               >
-                                Reject
+                                <X size={16} />
                               </Button>
                             </div>
                           </td>

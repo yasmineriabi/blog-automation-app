@@ -34,6 +34,8 @@ type AuthActionsType = {
   register: (body: IRegister) => Promise<void>;
   logout: () => void;
   updateUser: (updatedData: IUpdatedUser, id: string) => Promise<void>;
+  updateUsername: (userId: string, username: string) => Promise<void>;
+  updatePassword: (userId: string, newPassword: string) => Promise<void>;
 
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -182,6 +184,50 @@ const useAuthStore = create<AuthStateType & AuthActionsType>()(
         const errorMessage = error?.message || 'Update failed';
         toast.error(errorMessage);
         set({ uppdateLoader: false });
+      }
+    },
+
+    updateUsername: async (userId: string, username: string) => {
+      set({ uppdateLoader: true });
+      try {
+        const res = await axiosInstance.put<{ message: string }>(
+          `/api/users/update-username`,
+          { userId, username },
+        );
+        
+        if (res.data) {
+          // Update the user state with new username
+          set((state) => ({
+            user: state.user ? { ...state.user, username } : null,
+            uppdateLoader: false,
+          }));
+          toast.success(res.data.message);
+        }
+      } catch (error) {
+        const errorMessage = error?.message || 'Username update failed';
+        toast.error(errorMessage);
+        set({ uppdateLoader: false });
+        throw error;
+      }
+    },
+
+    updatePassword: async (userId: string, newPassword: string) => {
+      set({ uppdateLoader: true });
+      try {
+        const res = await axiosInstance.put<{ message: string }>(
+          `/api/users/update-password`,
+          { userId, newPassword },
+        );
+        
+        if (res.data) {
+          set({ uppdateLoader: false });
+          toast.success(res.data.message);
+        }
+      } catch (error) {
+        const errorMessage = error?.message || 'Password update failed';
+        toast.error(errorMessage);
+        set({ uppdateLoader: false });
+        throw error;
       }
     },
 

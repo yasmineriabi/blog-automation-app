@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import axiosInstance from "@/utils/axios";
 import { HOST_API } from "@/config";
 import { Blog, ApprovedBlogWithDomain } from "./blog.types";
+import useAuthStore from "@/store/auth";
 
 type BlogStateType = {
   blogs: Blog[];
@@ -67,8 +68,16 @@ const useBlogStore = create<BlogStateType & BlogActionsType>()(
     approveBlog: async (id: string) => {
       try {
         console.log("Approving blog with ID:", id);
+        
+        // Get the current user's username from auth store
+        const { user } = useAuthStore.getState();
+        if (!user || !user.username) {
+          throw new Error("User not authenticated or username not available");
+        }
+        
         const res = await axiosInstance.post(`/api/blogs/admin/pending-blogs/approve`, {
-          blogId: id
+          blogId: id,
+          username: user.username
         });
         set((state) => {
           state.blogs = state.blogs.filter((blog) => blog._id !== id);

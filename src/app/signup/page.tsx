@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
 import FormInput from "../../components/FormInput";
+import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 import FormMessage from "../../components/FormMessage";
 import FormCard from "../../components/FormCard";
@@ -28,7 +29,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (authenticated) {
-      router.replace("/dashboard");
+      router.replace("/login");
     }
   }, [authenticated, router]);
 
@@ -55,12 +56,12 @@ export default function SignupPage() {
     },
   });
 
-  const { errors, touched, isSubmitting } = formik;
+  const { errors, isSubmitting } = formik;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted via-background to-muted p-4">
       <FormCard
-        icon={<AccentIcon />}
+        //icon={<AccentIcon />}
         header={
           <>
             <h1 className="text-2xl font-bold text-foreground">
@@ -84,6 +85,7 @@ export default function SignupPage() {
               name="username"
               value={formik.values.username}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="Your username"
               autoComplete="off"
               readOnly
@@ -98,6 +100,7 @@ export default function SignupPage() {
               type="email"
               value={formik.values.email}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="you@example.com"
               autoComplete="off"
               readOnly
@@ -105,13 +108,13 @@ export default function SignupPage() {
               error={formik.touched.email && formik.errors.email}
             />
 
-            <FormInput
+            <PasswordInput
               label="Password"
               id="password"
               name="password"
-              type="password"
               value={formik.values.password}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="••••••••"
               autoComplete="off"
               readOnly
@@ -119,13 +122,13 @@ export default function SignupPage() {
               error={formik.touched.password && formik.errors.password}
             />
 
-            <FormInput
+            <PasswordInput
               label="Confirm Password"
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               value={formik.values.confirmPassword}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="••••••••"
               autoComplete="off"
               readOnly
@@ -138,17 +141,6 @@ export default function SignupPage() {
             <Button type="submit" loading={isSubmitting} className="w-full">
               Sign Up
             </Button>
-
-            <FormMessage
-              message={
-                errors.username ||
-                errors.email ||
-                errors.password ||
-                errors.confirmPassword ||
-                ""
-              }
-              type="error"
-            />
 
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
